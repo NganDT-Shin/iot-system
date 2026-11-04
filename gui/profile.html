@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Hệ thống IoT</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Khóa cứng toàn màn hình, không cho phép cuộn */
+        body {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            background-color: #f0f4f8;
+            overflow: hidden;
+        }
+
+        /* --- 1. MENU BÊN TRÁI --- */
+        .sidebar {
+            width: 220px;
+            background-color: #ffffff;
+            color: #64748b;
+            display: flex;
+            flex-direction: column;
+            padding-top: 15px;
+            box-shadow: 3px 0 10px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .sidebar .logo {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+            color: #1e3a8a;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar ul li {
+            padding: 15px 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar ul li a {
+            color: #64748b;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+        }
+
+        .sidebar ul li:hover {
+            background-color: #eff6ff;
+            border-left-color: #93c5fd;
+        }
+
+        .sidebar ul li:hover a {
+            color: #2563eb;
+        }
+
+        .sidebar ul li.active {
+            background-color: #dbeafe;
+            border-left-color: #3b82f6;
+        }
+
+        .sidebar ul li.active a {
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        /* --- 2. KHUNG NỘI DUNG CHÍNH --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #ffffff;
+            padding: 12px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e3a8a;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+
+        .content-container {
+            padding: 20px 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* --- 3. Ô THÔNG TIN CÁ NHÂN --- */
+        .profile-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.06);
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .profile-card h3 {
+            font-size: 15px;
+            color: #1e3a8a;
+            border-bottom: 2px solid #eff6ff;
+            padding-bottom: 6px;
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .input-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .input-group input {
+            padding: 7px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: #3b82f6;
+        }
+
+        /* --- 4. 4 DÒNG HIỂN THỊ LINK CÓ THỂ BẤM VÀO --- */
+        .links-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.06);
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .links-card h3 {
+            font-size: 15px;
+            color: #1e3a8a;
+            border-bottom: 2px solid #eff6ff;
+            padding-bottom: 6px;
+        }
+
+        .links-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .link-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .link-row label {
+            width: 110px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e3a8a;
+        }
+
+        /* Thẻ a đóng vai trò như chiếc hộp chứa link, bấm vào là chuyển hướng */
+        .link-anchor {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #2563eb;
+            background-color: #f8fafc;
+            text-decoration: none;
+            display: inline-block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: all 0.2s ease;
+        }
+
+        .link-anchor:hover {
+            background-color: #eff6ff;
+            border-color: #3b82f6;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Menu bên trái -->
+    <div class="sidebar">
+        <div class="logo">IoT SYSTEM</div>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="data_sensors.html">Data Sensors</a></li>
+            <li><a href="action_history.html">Action History</a></li>
+            <li class="active"><a href="profile.html">Profile</a></li>
+        </ul>
+    </div>
+
+    <!-- 2. Phần nội dung chính -->
+    <div class="main-content">
+        <div class="header">User Profile & Resources</div>
+
+        <div class="content-container">
+            <!-- 3. Ô thông tin cá nhân -->
+            <div class="profile-card">
+                <h3>Thông Tin Cá Nhân</h3>
+                <div class="profile-grid">
+                    <div class="input-group">
+                        <label>Họ và tên</label>
+                        <input type="text" value="Dương Thiên Ngân">
+                    </div>
+                    <div class="input-group">
+                        <label>Ngày sinh</label>
+                        <input type="text" value="08/02/2005">
+                    </div>
+                    <div class="input-group">
+                        <label>Mã sinh viên (MSV)</label>
+                        <input type="text" value="B23DCAT209">
+                    </div>
+                    <div class="input-group">
+                        <label>Lớp</label>
+                        <input type="text" value="D23CQAT04-B">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 4 dòng liên kết (Bấm vào tự chuyển hướng sang tab mới) -->
+            <div class="links-card">
+                <h3>Tài Nguyên Dự Án</h3>
+                <div class="links-list">
+                    <div class="link-row">
+                        <label>GitHub:</label>
+                        <a href="https://github.com/ngandtn/iot-system" target="_blank" class="link-anchor">https://github.com/ngandtn/iot-system</a>
+                    </div>
+                    <div class="link-row">
+                        <label>Figma:</label>
+                        <a href="https://figma.com" target="_blank" class="link-anchor">https://figma.com/@iot-system-design</a>
+                    </div>
+                    <div class="link-row">
+                        <label>Postman:</label>
+                        <a href="https://www.postman.com" target="_blank" class="link-anchor">https://documenter.getpostman.com/iot-api</a>
+                    </div>
+                    <div class="link-row">
+                        <label>PDF:</label>
+                        <a href="#" target="_blank" class="link-anchor">https://drive.google.com/file/d/baocao-iot.pdf</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

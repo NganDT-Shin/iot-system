@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Dashboard - Theo dõi cảm biến</title>
+    <!-- Nhập thư viện Chart.js để vẽ biểu đồ đường -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #f0f4f8;
+        }
+
+        /* --- 1. MENU BÊN TRÁI --- */
+        .sidebar {
+            width: 220px;
+            background-color: #ffffff;
+            color: #64748b;
+            display: flex;
+            flex-direction: column;
+            padding-top: 15px;
+            box-shadow: 3px 0 10px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .sidebar .logo {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+            color: #1e3a8a;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar ul li {
+            padding: 15px 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar ul li a {
+            color: #64748b;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+        }
+
+        .sidebar ul li:hover {
+            background-color: #eff6ff;
+            border-left-color: #93c5fd;
+        }
+
+        .sidebar ul li:hover a {
+            color: #2563eb;
+        }
+
+        .sidebar ul li.active {
+            background-color: #dbeafe;
+            border-left-color: #3b82f6;
+        }
+
+        .sidebar ul li.active a {
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        /* --- 2. KHUNG NỘI DUNG CHÍNH (DASHBOARD) --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .header {
+            background-color: #ffffff;
+            padding: 20px 30px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #1e3a8a;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .dashboard-grid {
+            padding: 25px;
+            display: grid;
+            grid-template-columns: 1fr 300px; /* Mở rộng cột phải chút để chứa 2 đèn */
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+            flex: 1;
+        }
+
+        /* --- 3. CÁC Ô THÔNG SỐ HIỆN TẠI (PHÍA TRÊN) --- */
+        .sensors-container {
+            grid-column: 1 / 2;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.08);
+            border-top: 4px solid #3b82f6;
+            text-align: center;
+        }
+
+        .card h3 {
+            font-size: 14px;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        /* --- 4. BIỂU ĐỒ ĐƯỜNG (Ở DƯỚI) --- */
+        .chart-container {
+            grid-column: 1 / 2;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.08);
+            display: flex;
+            flex-direction: column;
+            height: 380px;
+        }
+
+        .chart-container h3 {
+            font-size: 16px;
+            color: #334155;
+            margin-bottom: 15px;
+        }
+
+        .chart-box {
+            position: relative;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* --- 5. KHU VỰC CÔNG TẮC ĐÈN BÊN PHẢI --- */
+        .control-panel {
+            grid-column: 2 / 3;
+            grid-row: 1 / 3;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            overflow-y: auto;
+        }
+
+        .control-panel h3 {
+            font-size: 16px;
+            color: #334155;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .device-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            background-color: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 15px;
+        }
+
+        /* Icon Bóng đèn */
+        .light-bulb {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            transition: all 0.4s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .light-bulb svg {
+            width: 30px;
+            height: 30px;
+            fill: #64748b;
+            transition: all 0.4s ease;
+        }
+
+        /* Trạng thái BẬT của đèn */
+        .device-box.active .light-bulb {
+            background-color: #fde047; /* Vàng sáng rực */
+            box-shadow: 0 0 20px #facc15, inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .device-box.active .light-bulb svg {
+            fill: #ca8a04;
+        }
+
+        .device-name {
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        /* Nút gạt công tắc (Toggle Switch) */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 55px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #cbd5e1;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #3b82f6; /* Xanh dương khi bật */
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(27px);
+        }
+
+        .status-text {
+            margin-top: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Menu bên trái -->
+    <div class="sidebar">
+        <div class="logo">IoT SYSTEM</div>
+        <ul>
+            <li class="active"><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="data_sensors.html">Data Sensors</a></li>
+            <li><a href="action_history.html">Action History</a></li>
+            <li><a href="profile.html">Profile</a></li>
+        </ul>
+    </div>
+
+    <!-- 2. Phần nội dung chính -->
+    <div class="main-content">
+        <div class="header">Dashboard</div>
+
+        <div class="dashboard-grid">
+            <!-- 3. Các ô vuông thông số hiện tại -->
+            <div class="sensors-container">
+                <div class="card">
+                    <h3>Nhiệt độ</h3>
+                    <div class="value" id="temp-val">28.5 °C</div>
+                </div>
+                <div class="card">
+                    <h3>Độ ẩm</h3>
+                    <div class="value" id="hum-val">65 %</div>
+                </div>
+                <div class="card">
+                    <h3>Ánh sáng</h3>
+                    <div class="value" id="light-val">450 Lux</div>
+                </div>
+            </div>
+
+            <!-- 4. Biểu đồ đường của 3 thông số -->
+            <div class="chart-container">
+                <h3>Biểu đồ thông số thời gian thực</h3>
+                <div class="chart-box">
+                    <canvas id="sensorChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 5. Khu vực công tắc điều khiển 2 Đèn (Bên phải) -->
+            <div class="control-panel">
+                <h3>Điều Khiển Thiết Bị</h3>
+                
+                <!-- Đèn LED 1 -->
+                <div class="device-box" id="deviceBox1">
+                    <div class="light-bulb">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/>
+                        </svg>
+                    </div>
+                    <span class="device-name">Đèn LED 1</span>
+                    <label class="switch">
+                        <input type="checkbox" id="lightSwitch1" onchange="toggleLight(1, this)">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="status-text" id="statusText1">Trạng thái: TẮT</span>
+                </div>
+
+                <!-- Đèn LED 2 -->
+                <div class="device-box" id="deviceBox2">
+                    <div class="light-bulb">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/>
+                        </svg>
+                    </div>
+                    <span class="device-name">Đèn LED 2</span>
+                    <label class="switch">
+                        <input type="checkbox" id="lightSwitch2" onchange="toggleLight(2, this)">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="status-text" id="statusText2">Trạng thái: TẮT</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script tương tác -->
+    <script>
+        // 1. Xử lý bật tắt đèn cho từng thiết bị (LED 1 hoặc LED 2)
+        function toggleLight(ledId, checkbox) {
+            const deviceBox = document.getElementById(`deviceBox${ledId}`);
+            const statusText = document.getElementById(`statusText${ledId}`);
+            
+            // Tạo lệnh tương ứng khớp với code Arduino của bạn ("LED1 ON", "LED2 OFF"...)
+            let command = checkbox.checked ? `LED${ledId} ON` : `LED${ledId} OFF`;
+
+            // Gửi request POST tới Flask Backend
+            fetch('http://localhost:5000/api/control', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ command: command })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Phản hồi từ Server:", data);
+                if (checkbox.checked) {
+                    deviceBox.classList.add('active');
+                    statusText.innerText = "Trạng thái: BẬT";
+                    statusText.style.color = "#2563eb";
+                } else {
+                    deviceBox.classList.remove('active');
+                    statusText.innerText = "Trạng thái: TẮT";
+                    statusText.style.color = "#64748b";
+                }
+            })
+            .catch(error => {
+                console.error('Lỗi kết nối tới Backend:', error);
+                alert('Không thể kết nối đến Server điều khiển!');
+                checkbox.checked = !checkbox.checked; // Trượt ngược lại nếu lỗi
+            });
+        }
+
+        // 2. Cấu hình biểu đồ đường với Chart.js
+        const ctx = document.getElementById('sensorChart').getContext('2d');
+        const sensorChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Nhiệt độ (°C)',
+                        data: [],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.3,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Độ ẩm (%)',
+                        data: [],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Ánh sáng (Lux)',
+                        data: [],
+                        borderColor: '#eab308',
+                        backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                        tension: 0.3,
+                        yAxisID: 'y'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f1f5f9' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+
+        // 3. Cập nhật dữ liệu cảm biến thời gian thực mỗi 3 giây
+        setInterval(() => {
+            fetch('http://localhost:5000/api/sensors')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('temp-val').innerText = data.temperature;
+                document.getElementById('hum-val').innerText = data.humidity;
+                document.getElementById('light-val').innerText = data.light;
+
+                const nowStr = new Date().toLocaleTimeString();
+                const tempValNum = parseFloat(data.temperature);
+                const humValNum = parseFloat(data.humidity);
+                const lightValNum = parseFloat(data.light);
+
+                if (!isNaN(tempValNum)) {
+                    if (sensorChart.data.labels.length > 10) {
+                        sensorChart.data.labels.shift();
+                        sensorChart.data.datasets[0].data.shift();
+                        sensorChart.data.datasets[1].data.shift();
+                        sensorChart.data.datasets[2].data.shift();
+                    }
+
+                    sensorChart.data.labels.push(nowStr);
+                    sensorChart.data.datasets[0].data.push(tempValNum);
+                    sensorChart.data.datasets[1].data.push(humValNum);
+                    sensorChart.data.datasets[2].data.push(lightValNum);
+                    sensorChart.update();
+                }
+            })
+            .catch(err => console.log("Đang chờ kết nối tới Server cảm biến..."));
+        }, 3000);
+
+        // 4. Hàm đồng bộ trạng thái đèn từ CSDL khi vừa mở trang Dashboard
+        function fetchDeviceStatus() {
+            fetch('http://localhost:5000/api/devices')
+            .then(response => response.json())
+            .then(devices => {
+                devices.forEach(dev => {
+                    // Giả định device_id = 1 là Đèn LED 1, device_id = 2 là Đèn LED 2
+                    let ledId = dev.device_id;
+                    let checkbox = document.getElementById(`lightSwitch${ledId}`);
+                    let deviceBox = document.getElementById(`deviceBox${ledId}`);
+                    let statusText = document.getElementById(`statusText${ledId}`);
+
+                    // Kiểm tra trạng thái trong DB (nếu là 'on' hoặc 'active')
+                    if (dev.status && (dev.status.toLowerCase() === 'on' || dev.status.toLowerCase() === 'active')) {
+                        if (checkbox) checkbox.checked = true;
+                        if (deviceBox) deviceBox.classList.add('active');
+                        if (statusText) {
+                            statusText.innerText = "Trạng thái: BẬT";
+                            statusText.style.color = "#2563eb";
+                        }
+                    }
+                });
+            })
+            .catch(err => console.log("Không thể đồng bộ trạng thái thiết bị:", err));
+        }
+
+        // Gọi hàm đồng bộ khi trang vừa load xong
+        window.onload = function() {
+            fetchDeviceStatus();
+        };
+    </script>
+</body>
+</html>

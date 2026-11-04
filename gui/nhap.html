@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Action History - Hệ thống IoT</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            background-color: #f0f4f8;
+            overflow: hidden;
+        }
+
+        /* --- 1. MENU BÊN TRÁI --- */
+        .sidebar {
+            width: 220px;
+            background-color: #ffffff;
+            color: #64748b;
+            display: flex;
+            flex-direction: column;
+            padding-top: 15px;
+            box-shadow: 3px 0 10px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .sidebar .logo {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+            color: #1e3a8a;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar ul li {
+            padding: 15px 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar ul li a {
+            color: #64748b;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+        }
+
+        .sidebar ul li:hover {
+            background-color: #eff6ff;
+            border-left-color: #93c5fd;
+        }
+
+        .sidebar ul li:hover a {
+            color: #2563eb;
+        }
+
+        .sidebar ul li.active {
+            background-color: #dbeafe;
+            border-left-color: #3b82f6;
+        }
+
+        .sidebar ul li.active a {
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        /* --- 2. KHUNG NỘI DUNG CHÍNH --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #ffffff;
+            padding: 12px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e3a8a;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+
+        .content-container {
+            padding: 15px 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* --- 3. THANH TÌM KIẾM --- */
+        .search-bar-container {
+            display: flex;
+            gap: 12px;
+            background-color: #ffffff;
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.06);
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: #3b82f6;
+        }
+
+        .search-select {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            background-color: #fff;
+            color: #334155;
+            transition: border-color 0.3s;
+        }
+
+        .search-select:focus {
+            border-color: #3b82f6;
+        }
+
+        .search-btn {
+            padding: 8px 16px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .search-btn:hover {
+            background-color: #2563eb;
+        }
+
+        /* --- 4. BẢNG THỐNG KÊ LỊCH SỬ THAO TÁC --- */
+        .table-container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.06);
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            table-layout: fixed;
+        }
+
+        th {
+            background-color: #1e3a8a;
+            color: white;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 9px 12px;
+            font-size: 13px;
+            color: #334155;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        tr:hover {
+            background-color: #eff6ff;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .badge-on {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+
+        .badge-off {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .badge-loading {
+            background-color: #fef9c3;
+            color: #a16207;
+        }
+
+        /* --- 5. THANH PHÂN TRANG --- */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #ffffff;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.06);
+            flex-shrink: 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .pagination { display: flex; gap: 5px; }
+        .page-btn {
+            padding: 5px 10px; border: 1px solid #cbd5e1;
+            background-color: #ffffff; color: #334155; border-radius: 4px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .page-btn:hover:not(:disabled) {
+            background-color: #eff6ff; border-color: #3b82f6; color: #2563eb;
+        }
+        .page-btn.active { background-color: #3b82f6; color: white; border-color: #3b82f6; }
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">IoT SYSTEM</div>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="data_sensors.html">Data Sensors</a></li>
+            <li class="active"><a href="action_history.html">Action History</a></li>
+            <li><a href="profile.html">Profile</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="header">Action History</div>
+
+        <div class="content-container">
+            <!-- Thanh tìm kiếm đã cập nhật đúng 2 Đèn LED -->
+            <div class="search-bar-container">
+                <input type="text" class="search-input" placeholder="Nhập thời gian cần tìm kiếm...">
+                
+                <select class="search-select device-select">
+                    <option value="">Tất cả thiết bị</option>
+                    <option value="đèn led 1">Đèn LED 1</option>
+                    <option value="đèn led 2">Đèn LED 2</option>
+                </select>
+
+                <select class="search-select action-select">
+                    <option value="">Tất cả hành động</option>
+                    <option value="on">On</option>
+                    <option value="off">Off</option>
+                </select>
+
+                <select class="search-select status-select">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="on">On</option>
+                    <option value="off">Off</option>
+                    <option value="loading">Loading</option>
+                </select>
+
+                <button class="search-btn">Tìm kiếm</button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 8%;">ID</th>
+                            <th style="width: 24%;">Tên thiết bị</th>
+                            <th style="width: 12%;">Hành động</th>
+                            <th style="width: 13%;">Trạng thái</th>
+                            <th style="width: 21%;">Thời gian gửi yêu cầu</th>
+                            <th style="width: 22%;">Thời gian phản hồi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="actionTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination-container">
+                <div id="pageInfo">Đang tải thông tin...</div>
+                <div class="pagination" id="paginationNumbers"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const ROWS_PER_PAGE = 12;
+    let currentPage = 1;
+    let allActionData = [];
+
+    function fetchActionHistory() {
+        fetch('http://localhost:5000/api/history')
+        .then(response => response.json())
+        .then(data => {
+            allActionData = data;
+            updateTable();
+        })
+        .catch(err => {
+            console.error("Lỗi khi tải lịch sử thao tác:", err);
+            document.getElementById("pageInfo").textContent = "Không thể kết nối đến Server cơ sở dữ liệu!";
+        });
+    }
+
+    function updateTable() {
+        const timeKeyword = document.querySelector(".search-input").value.trim().toLowerCase();
+        const deviceVal = document.querySelector(".device-select").value.toLowerCase();
+        const actionVal = document.querySelector(".action-select").value.toLowerCase();
+        const statusVal = document.querySelector(".status-select").value.toLowerCase();
+        const tbody = document.getElementById("actionTableBody");
+        tbody.innerHTML = "";
+
+        const matchedRows = allActionData.filter(item => {
+            const deviceText = (item.device_name || "").toLowerCase();
+            const actionText = (item.action || "").toLowerCase();
+            const statusText = (item.status || "").toLowerCase();
+            const timeText = ((item.time || "") + " " + (item.time_response || "")).toLowerCase();
+
+            const matchesTime = timeKeyword === "" || timeText.includes(timeKeyword);
+            const matchesDevice = deviceVal === "" || deviceText.includes(deviceVal);
+            const matchesAction = actionVal === "" || actionText.includes(actionVal);
+            const matchesStatus = statusVal === "" || statusText.includes(statusVal);
+
+            return matchesTime && matchesDevice && matchesAction && matchesStatus;
+        });
+
+        const totalRows = matchedRows.length;
+        const totalPages = Math.ceil(totalRows / ROWS_PER_PAGE) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+        const endIndex = startIndex + ROWS_PER_PAGE;
+        const pageItems = matchedRows.slice(startIndex, endIndex);
+
+        pageItems.forEach(item => {
+            // Xử lý chuẩn cột Hành động (Action) bóc từ chuỗi action (VD: "LED1 OFF" -> "OFF")
+            let actionRaw = (item.action || "").toUpperCase();
+            let actionDisplay = actionRaw.includes("OFF") ? "OFF" : "ON";
+            let actionBadgeClass = actionDisplay === "OFF" ? 'badge-off' : 'badge-on';
+            
+            // Xử lý cột Trạng thái (Status)
+            let statusRaw = (item.status || "").toLowerCase();
+            let statusTextVal = statusRaw === 'loading' ? 'LOADING' : (statusRaw === 'off' ? 'OFF' : 'ON');
+            
+            let statusBadgeClass = 'badge-loading';
+            if (statusTextVal === 'ON') statusBadgeClass = 'badge-on';
+            else if (statusTextVal === 'OFF') statusBadgeClass = 'badge-off';
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${item.id}</td>
+                <td>${item.device_name || 'Đèn LED'}</td>
+                <td><span class="badge ${actionBadgeClass}">${actionDisplay}</span></td>
+                <td><span class="badge ${statusBadgeClass}">${statusTextVal}</span></td>
+                <td>${item.time || ''}</td>
+                <td>${item.time_response || 'Đang chờ...'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        const pageInfo = document.getElementById("pageInfo");
+        pageInfo.textContent = totalRows === 0
+            ? "Không tìm thấy dữ liệu phù hợp"
+            : `Hiển thị dòng ${startIndex + 1} - ${Math.min(endIndex, totalRows)} trên tổng số ${totalRows} dòng`;
+        
+        renderPaginationControls(totalPages);
+    }
+
+    function renderPaginationControls(totalPages) {
+        const container = document.getElementById("paginationNumbers");
+        container.innerHTML = "";
+
+        const prevBtn = document.createElement("button");
+        prevBtn.className = "page-btn";
+        prevBtn.textContent = "«";
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; updateTable(); } };
+        container.appendChild(prevBtn);
+
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement("button");
+            btn.className = `page-btn ${i === currentPage ? "active" : ""}`;
+            btn.textContent = i;
+            btn.onclick = () => { currentPage = i; updateTable(); };
+            container.appendChild(btn);
+        }
+
+        const nextBtn = document.createElement("button");
+        nextBtn.className = "page-btn";
+        nextBtn.textContent = "»";
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; updateTable(); } };
+        container.appendChild(nextBtn);
+    }
+
+    document.querySelector(".search-btn").addEventListener("click", function () {
+        currentPage = 1;
+        updateTable();
+    });
+
+    window.onload = function() {
+        fetchActionHistory();
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Sensors - Hệ thống IoT</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Khóa cứng toàn màn hình, không cho phép cuộn trang tổng */
+        body {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            background-color: #f0f4f8;
+            overflow: hidden;
+        }
+
+        /* --- 1. MENU BÊN TRÁI --- */
+        .sidebar {
+            width: 220px;
+            background-color: #ffffff;
+            color: #64748b;
+            display: flex;
+            flex-direction: column;
+            padding-top: 15px;
+            box-shadow: 3px 0 10px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .sidebar .logo {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+            color: #1e3a8a;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar ul li {
+            padding: 15px 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar ul li a {
+            color: #64748b;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+        }
+
+        .sidebar ul li:hover {
+            background-color: #eff6ff;
+            border-left-color: #93c5fd;
+        }
+
+        .sidebar ul li:hover a {
+            color: #2563eb;
+        }
+
+        .sidebar ul li.active {
+            background-color: #dbeafe;
+            border-left-color: #3b82f6;
+        }
+
+        .sidebar ul li.active a {
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        /* --- 2. KHUNG NỘI DUNG CHÍNH --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #ffffff;
+            padding: 12px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e3a8a;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+
+        .content-container {
+            padding: 15px 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+            overflow: hidden;
+            align-items: flex-start; /* Giúp các khối bám gọn theo nội dung bảng */
+        }
+
+        /* --- 3. THANH TÌM KIẾM & DROPDOWN --- */
+        .search-bar-container {
+            display: flex;
+            gap: 12px;
+            background-color: #ffffff;
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.06);
+            align-items: center;
+            width: 100%;
+            flex-shrink: 0;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: #3b82f6;
+        }
+
+        .filter-dropdown {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            background-color: #ffffff;
+            color: #334155;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .filter-dropdown:focus {
+            border-color: #3b82f6;
+        }
+
+        .search-btn {
+            padding: 8px 16px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .search-btn:hover {
+            background-color: #2563eb;
+        }
+
+        /* --- 4. BẢNG THỐNG KÊ DỮ LIỆU --- */
+        .table-container {
+            background-color: #ffffff;
+            border-radius: 10px; /* Bo tròn phía trên */
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.06);
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            table-layout: fixed;
+        }
+
+        th {
+            background-color: #1e3a8a;
+            color: white;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 9px 12px;
+            font-size: 13px;
+            color: #334155;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        tr:hover {
+            background-color: #eff6ff;
+        }
+
+        /* --- 5. THANH PHÂN TRANG (PAGINATION) NẰM SÁT NGAY DƯỚI BẢNG --- */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #ffffff;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.06);
+            width: 100%;
+            flex-shrink: 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .pagination { display: flex; gap: 5px; }
+        .page-btn {
+            padding: 5px 10px; border: 1px solid #cbd5e1;
+            background-color: #ffffff; color: #334155; border-radius: 4px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .page-btn:hover:not(:disabled) {
+            background-color: #eff6ff; border-color: #3b82f6; color: #2563eb;
+        }
+        .page-btn.active { background-color: #3b82f6; color: white; border-color: #3b82f6; }
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Menu bên trái -->
+    <div class="sidebar">
+        <div class="logo">IoT SYSTEM</div>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li class="active"><a href="data_sensors.html">Data Sensors</a></li>
+            <li><a href="action_history.html">Action History</a></li>
+            <li><a href="profile.html">Profile</a></li>
+        </ul>
+    </div>
+
+    <!-- 2. Phần nội dung chính -->
+    <div class="main-content">
+        <div class="header">Data Sensors Statistics</div>
+
+        <div class="content-container">
+            <!-- 3. Thanh tìm kiếm & Dropdown 4 giá trị bộ lọc -->
+            <div class="search-bar-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Nhập giá trị tìm kiếm (VD: 0-100, 2026-06)...">
+                
+                <select id="filterDropdown" class="filter-dropdown">
+                    <option value="all">Tất cả</option>
+                    <option value="nhiet_do">Nhiệt độ</option>
+                    <option value="do_am">Độ ẩm</option>
+                    <option value="anh_sang">Ánh sáng</option>
+                    <option value="thoi_gian">Thời gian</option>
+                </select>
+
+                <button class="search-btn">Tìm kiếm</button>
+            </div>
+
+            <!-- 4. Bảng dữ liệu -->
+            <!-- 4. Bảng dữ liệu (sẽ được JavaScript tự động điền từ database) -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 10%;">ID</th>
+                            <th style="width: 20%;">Tên thiết bị</th>
+                            <th style="width: 25%;">Cảm Biến</th>
+                            <th style="width: 20%;">Giá Trị</th>
+                            <th style="width: 25%;">Thời Gian</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sensorTableBody">
+                        <!-- Dữ liệu từ API sẽ được chèn vào đây tự động -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Thanh phân trang nằm sát ngay dưới bảng -->
+            <div class="pagination-container">
+                <div id="pageInfo">Đang tải thông tin...</div>
+                <div class="pagination" id="paginationNumbers"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const ROWS_PER_PAGE = 13; 
+    let currentPage = 1;
+    let allSensorData = []; // Mảng chứa dữ liệu lấy từ Database
+
+    // Hàm gọi API lấy dữ liệu từ Backend Flask
+    function fetchSensorData() {
+        fetch('http://localhost:5000/api/sensors-history')
+        .then(response => response.json())
+        .then(data => {
+            allSensorData = data; // Lưu dữ liệu vào mảng
+            updateTable();       // Cập nhật lại bảng và phân trang
+        })
+        .catch(err => {
+            console.error("Lỗi khi tải dữ liệu cảm biến:", err);
+            document.getElementById("pageInfo").textContent = "Không thể kết nối đến Server cơ sở dữ liệu!";
+        });
+    }
+
+    function updateTable() {
+        const searchValue = document.getElementById("searchInput").value.trim().toLowerCase();
+        const filterValue = document.getElementById("filterDropdown").value;
+        const tbody = document.getElementById("sensorTableBody");
+        tbody.innerHTML = ""; // Xóa dữ liệu cũ trên giao diện
+
+        // Lọc dữ liệu theo từ khóa tìm kiếm và dropdown bộ lọc
+        const matchedData = allSensorData.filter(item => {
+            const sensorText = (item.sensor_name || "").toLowerCase();
+            const valueText = (item.value || "").toLowerCase();
+            const timeText = (item.time || "").toLowerCase();
+            const deviceText = (item.device_name || "").toLowerCase();
+
+            if (searchValue === "") return true;
+
+            if (filterValue === "nhiet_do") {
+                return sensorText.includes("nhiệt độ") && valueText.includes(searchValue);
+            } 
+            else if (filterValue === "do_am") {
+                return sensorText.includes("độ ẩm") && valueText.includes(searchValue);
+            } 
+            else if (filterValue === "anh_sang") {
+                return sensorText.includes("ánh sáng") && valueText.includes(searchValue);
+            } 
+            else if (filterValue === "thoi_gian") {
+                return timeText.includes(searchValue);
+            } 
+            else { 
+                return sensorText.includes(searchValue) || valueText.includes(searchValue) || timeText.includes(searchValue) || deviceText.includes(searchValue);
+            }
+        });
+
+        // Tính toán phân trang
+        const totalRows = matchedData.length;
+        const totalPages = Math.ceil(totalRows / ROWS_PER_PAGE) || 1;
+        
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+        const endIndex = startIndex + ROWS_PER_PAGE;
+        const pageItems = matchedData.slice(startIndex, endIndex);
+
+        // Đổ dữ liệu các dòng thuộc trang hiện tại vào bảng HTML
+        pageItems.forEach(item => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${item.id}</td>
+                <td>${item.device_name}</td>
+                <td>${item.sensor_name}</td>
+                <td>${item.value}</td>
+                <td>${item.time}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Cập nhật thông tin phân trang góc trái
+        const pageInfo = document.getElementById("pageInfo");
+        if (totalRows === 0) {
+            pageInfo.textContent = `Không tìm thấy dữ liệu phù hợp`;
+        } else {
+            pageInfo.textContent = `Hiển thị dòng ${startIndex + 1} - ${Math.min(endIndex, totalRows)} trên tổng số ${totalRows} dòng`;
+        }
+
+        renderPaginationControls(totalPages);
+    }
+
+    function renderPaginationControls(totalPages) {
+        const paginationContainer = document.getElementById("paginationNumbers");
+        paginationContainer.innerHTML = "";
+
+        // Nút trang trước «
+        const prevBtn = document.createElement("button");
+        prevBtn.className = "page-btn";
+        prevBtn.textContent = "«";
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => {
+            if (currentPage > 1) {
+                currentPage--;
+                updateTable();
+            }
+        };
+        paginationContainer.appendChild(prevBtn);
+
+        // Các nút số trang
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement("button");
+            btn.className = `page-btn ${i === currentPage ? "active" : ""}`;
+            btn.textContent = i;
+            btn.onclick = () => {
+                currentPage = i;
+                updateTable();
+            };
+            paginationContainer.appendChild(btn);
+        }
+
+        // Nút trang sau »
+        const nextBtn = document.createElement("button");
+        nextBtn.className = "page-btn";
+        nextBtn.textContent = "»";
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                updateTable();
+            }
+        };
+        paginationContainer.appendChild(nextBtn);
+    }
+
+    // Sự kiện bấm nút tìm kiếm
+    document.querySelector(".search-btn").addEventListener("click", function () {
+        currentPage = 1;
+        updateTable();
+    });
+
+    // Khi load trang, tự động gọi API lấy dữ liệu từ database
+    window.onload = function() {
+        fetchSensorData();
+    };
+</script>
+</body>
+</html>
