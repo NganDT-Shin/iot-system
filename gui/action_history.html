@@ -264,9 +264,14 @@
         <div class="logo">IoT SYSTEM</div>
         <ul>
             <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="dashboard2.html">Dashboard 2</a></li>
             <li><a href="data_sensors.html">Data Sensors</a></li>
             <li class="active"><a href="action_history.html">Action History</a></li>
             <li><a href="profile.html">Profile</a></li>
+            <!-- Thêm nút Đăng xuất -->
+            <li onclick="handleLogout()" style="margin-top: auto; border-top: 1px solid #e2e8f0; color: #ef4444;">
+                <a href="#" style="color: #ef4444;">Đăng xuất</a>
+            </li>
         </ul>
     </div>
 
@@ -325,14 +330,49 @@
     </div>
 
 <script>
+    // 1. Kiểm tra xác thực ngay khi tải trang: Nếu chưa có token, đá về trang login
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+    }
+
+    // 2. Hàm xử lý Đăng xuất
+    function handleLogout() {
+        fetch('http://localhost:5000/api/logout', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        })
+        .finally(() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            window.location.href = 'login.html';
+        });
+    }
     const ROWS_PER_PAGE = 12;
     let currentPage = 1;
     let allActionData = [];
 
     function fetchActionHistory() {
-        fetch('http://localhost:5000/api/history')
-        .then(response => response.json())
+        fetch('http://localhost:5000/api/history', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + token, // <--- Bổ sung Header Token ở đây
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.status === 401) {
+                alert('Phiên đăng nhập đã hết hạn!');
+                window.location.href = 'login.html';
+                return;
+            }
+            return response.json();
+        })
         .then(data => {
+            if (!data) return;
             allActionData = data;
             updateTable();
         })
@@ -352,13 +392,20 @@
 
         const matchedRows = allActionData.filter(item => {
             const deviceText = (item.device_name || "").toLowerCase();
-            const actionText = (item.action || "").toLowerCase();
+            
+            // Lấy chính xác chuỗi hành động từ DB và chuẩn hóa (nếu lưu dạng "LED1 ON" thì bóc tách lấy "on" hoặc "off")
+            let rawAct = (item.action || "").toLowerCase();
+            let actionText = rawAct.includes("off") ? "off" : (rawAct.includes("on") ? "on" : rawAct);
+
             const statusText = (item.status || "").toLowerCase();
             const timeText = ((item.time || "") + " " + (item.time_response || "")).toLowerCase();
 
             const matchesTime = timeKeyword === "" || timeText.includes(timeKeyword);
             const matchesDevice = deviceVal === "" || deviceText.includes(deviceVal);
-            const matchesAction = actionVal === "" || actionText.includes(actionVal);
+            
+            // Sửa lại so sánh chính xác tuyệt đối cho hành động (khớp chính xác giá trị on / off)
+            const matchesAction = actionVal === "" || actionText === actionVal;
+            
             const matchesStatus = statusVal === "" || statusText.includes(statusVal);
 
             return matchesTime && matchesDevice && matchesAction && matchesStatus;

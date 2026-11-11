@@ -230,9 +230,14 @@
         <div class="logo">IoT SYSTEM</div>
         <ul>
             <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="dashboard2.html">Dashboard 2</a></li>
             <li><a href="data_sensors.html">Data Sensors</a></li>
             <li><a href="action_history.html">Action History</a></li>
             <li class="active"><a href="profile.html">Profile</a></li>
+            <!-- Thêm nút Đăng xuất -->
+            <li onclick="handleLogout()" style="margin-top: auto; border-top: 1px solid #e2e8f0; color: #ef4444;">
+                <a href="#" style="color: #ef4444;">Đăng xuất</a>
+            </li>
         </ul>
     </div>
 
@@ -270,7 +275,7 @@
                 <div class="links-list">
                     <div class="link-row">
                         <label>GitHub:</label>
-                        <a href="https://github.com/ngandtn/iot-system" target="_blank" class="link-anchor">https://github.com/ngandtn/iot-system</a>
+                        <a href="https://github.com/NganDT-Shin/iot-system" target="_blank" class="link-anchor">https://github.com/NganDT-Shin/iot-system</a>
                     </div>
                     <div class="link-row">
                         <label>Figma:</label>
@@ -278,15 +283,39 @@
                     </div>
                     <div class="link-row">
                         <label>Postman:</label>
-                        <a href="https://www.postman.com" target="_blank" class="link-anchor">https://documenter.getpostman.com/iot-api</a>
+                        <a href="https://thiennganduong0802-7607682.postman.co/workspace/D%C6%B0%C6%A1ng-Thi%C3%AAn-Ng%C3%A2n's-Workspace~9cde0073-2ff4-49aa-8172-613d56298907/collection/51230373-c49ddef6-cba5-423a-b8d7-efd3b7913862?action=share&source=copy-link&creator=51230373" target="_blank" class="link-anchor">https://thiennganduong0802-7607682.postman.co/workspace/D%C6%B0%C6%A1ng-Thi%C3%AAn-Ng%C3%A2n's-Workspace~9cde0073-2ff4-49aa-8172-613d56298907/collection/51230373-c49ddef6-cba5-423a-b8d7-efd3b7913862?action=share&source=copy-link&creator=51230373</a>
                     </div>
                     <div class="link-row">
                         <label>PDF:</label>
-                        <a href="#" target="_blank" class="link-anchor">https://drive.google.com/file/d/baocao-iot.pdf</a>
+                        <a href="https://drive.google.com/file/d/1eBJAqTUyGEuABQ_6djvuxC8lJIHnWhWb/view?usp=sharing" target="_blank" class="link-anchor">https://drive.google.com/file/d/1eBJAqTUyGEuABQ_6djvuxC8lJIHnWhWb/view?usp=sharing</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        // 1. Kiểm tra xác thực ngay khi tải trang: Nếu chưa có token, đá về trang login
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        // 2. Hàm xử lý Đăng xuất
+        function handleLogout() {
+            fetch('http://localhost:5000/api/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .finally(() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('username');
+                window.location.href = 'login.html';
+            });
+        }
+    </script>
 </body>
 </html>

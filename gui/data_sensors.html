@@ -247,9 +247,14 @@
         <div class="logo">IoT SYSTEM</div>
         <ul>
             <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="dashboard2.html">Dashboard 2</a></li>
             <li class="active"><a href="data_sensors.html">Data Sensors</a></li>
             <li><a href="action_history.html">Action History</a></li>
             <li><a href="profile.html">Profile</a></li>
+            <!-- Thêm nút Đăng xuất -->
+            <li onclick="handleLogout()" style="margin-top: auto; border-top: 1px solid #e2e8f0; color: #ef4444;">
+                <a href="#" style="color: #ef4444;">Đăng xuất</a>
+            </li>
         </ul>
     </div>
 
@@ -258,7 +263,7 @@
         <div class="header">Data Sensors Statistics</div>
 
         <div class="content-container">
-            <!-- 3. Thanh tìm kiếm & Dropdown 4 giá trị bộ lọc -->
+            <!-- 3. Thanh tìm kiếm & Dropdown bộ lọc -->
             <div class="search-bar-container">
                 <input type="text" id="searchInput" class="search-input" placeholder="Nhập giá trị tìm kiếm (VD: 0-100, 2026-06)...">
                 
@@ -267,6 +272,9 @@
                     <option value="nhiet_do">Nhiệt độ</option>
                     <option value="do_am">Độ ẩm</option>
                     <option value="anh_sang">Ánh sáng</option>
+                    <option value="rand_11">Random (0 - 11)</option>
+                    <option value="rand_101">Random (0 - 101)</option>
+                    <option value="rand_1001">Random (0 - 1001)</option>
                     <option value="thoi_gian">Thời gian</option>
                 </select>
 
@@ -274,7 +282,6 @@
             </div>
 
             <!-- 4. Bảng dữ liệu -->
-            <!-- 4. Bảng dữ liệu (sẽ được JavaScript tự động điền từ database) -->
             <div class="table-container">
                 <table>
                     <thead>
@@ -300,15 +307,50 @@
     </div>
 
 <script>
+    // 1. Kiểm tra xác thực ngay khi tải trang: Nếu chưa có token, đá về trang login
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+    }
+
+    // 2. Hàm xử lý Đăng xuất
+    function handleLogout() {
+        fetch('http://localhost:5000/api/logout', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        })
+        .finally(() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            window.location.href = 'login.html';
+        });
+    }
     const ROWS_PER_PAGE = 13; 
     let currentPage = 1;
     let allSensorData = []; // Mảng chứa dữ liệu lấy từ Database
 
     // Hàm gọi API lấy dữ liệu từ Backend Flask
     function fetchSensorData() {
-        fetch('http://localhost:5000/api/sensors-history')
-        .then(response => response.json())
+        fetch('http://localhost:5000/api/sensors-history', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + token, // <--- Bổ sung Header Token ở đây
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.status === 401) {
+                alert('Phiên đăng nhập đã hết hạn!');
+                window.location.href = 'login.html';
+                return;
+            }
+            return response.json();
+        })
         .then(data => {
+            if (!data) return;
             allSensorData = data; // Lưu dữ liệu vào mảng
             updateTable();       // Cập nhật lại bảng và phân trang
         })
@@ -331,23 +373,34 @@
             const timeText = (item.time || "").toLowerCase();
             const deviceText = (item.device_name || "").toLowerCase();
 
+            // Kiểm tra bộ lọc theo Dropdown trước
+            let matchFilter = true;
+            if (filterValue === "nhiet_do") {
+                matchFilter = sensorText.includes("nhiệt độ");
+            } else if (filterValue === "do_am") {
+                matchFilter = sensorText.includes("độ ẩm");
+            } else if (filterValue === "anh_sang") {
+                matchFilter = sensorText.includes("ánh sáng");
+            } else if (filterValue === "rand_11") {
+                matchFilter = sensorText.includes("random") && sensorText.includes("11");
+            } else if (filterValue === "rand_101") {
+                matchFilter = sensorText.includes("random") && sensorText.includes("101");
+            } else if (filterValue === "rand_1001") {
+                matchFilter = sensorText.includes("random") && sensorText.includes("1001");
+            } else if (filterValue === "thoi_gian") {
+                matchFilter = true; // Dùng ô tìm kiếm để lọc thời gian
+            }
+
+            if (!matchFilter) return false;
+
+            // Nếu ô tìm kiếm trống, chỉ cần thỏa mãn dropdown là đủ
             if (searchValue === "") return true;
 
-            if (filterValue === "nhiet_do") {
-                return sensorText.includes("nhiệt độ") && valueText.includes(searchValue);
-            } 
-            else if (filterValue === "do_am") {
-                return sensorText.includes("độ ẩm") && valueText.includes(searchValue);
-            } 
-            else if (filterValue === "anh_sang") {
-                return sensorText.includes("ánh sáng") && valueText.includes(searchValue);
-            } 
-            else if (filterValue === "thoi_gian") {
-                return timeText.includes(searchValue);
-            } 
-            else { 
-                return sensorText.includes(searchValue) || valueText.includes(searchValue) || timeText.includes(searchValue) || deviceText.includes(searchValue);
-            }
+            // Nếu có nhập nội dung tìm kiếm kết hợp
+            return sensorText.includes(searchValue) || 
+                   valueText.includes(searchValue) || 
+                   timeText.includes(searchValue) || 
+                   deviceText.includes(searchValue);
         });
 
         // Tính toán phân trang
@@ -440,4 +493,4 @@
     };
 </script>
 </body>
-</html>
+</html>o

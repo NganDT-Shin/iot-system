@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Dashboard 2 - Random & LED Control</title>
+    <!-- Nhập thư viện Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #f0f4f8;
+        }
+
+        /* --- MENU BÊN TRÁI --- */
+        .sidebar {
+            width: 220px;
+            background-color: #ffffff;
+            color: #64748b;
+            display: flex;
+            flex-direction: column;
+            padding-top: 15px;
+            box-shadow: 3px 0 10px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .sidebar .logo {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+            color: #1e3a8a;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar ul li {
+            padding: 15px 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar ul li a {
+            color: #64748b;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+        }
+
+        .sidebar ul li:hover {
+            background-color: #eff6ff;
+            border-left-color: #93c5fd;
+        }
+
+        .sidebar ul li:hover a {
+            color: #2563eb;
+        }
+
+        .sidebar ul li.active {
+            background-color: #dbeafe;
+            border-left-color: #3b82f6;
+        }
+
+        .sidebar ul li.active a {
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        /* --- NỘI DUNG CHÍNH --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        /* Thanh Header chỉnh lại để chứa nút bấm góc trên bên phải */
+        .header {
+            background-color: #ffffff;
+            padding: 20px 30px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #1e3a8a;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Style cho nút Random góc trên bên phải */
+        .btn-random {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-random:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-random:active {
+            transform: scale(0.97);
+        }
+
+        .dashboard-grid {
+            padding: 25px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: auto auto auto;
+            gap: 20px;
+        }
+
+        /* --- HÀNG 1: 3 Ô RANDOM --- */
+        .card {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.08);
+            border-top: 4px solid #3b82f6;
+            text-align: center;
+        }
+
+        .card h3 {
+            font-size: 14px;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        /* --- HÀNG 2: 3 BIỂU ĐỒ ĐƯỜNG --- */
+        .chart-card {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.08);
+            display: flex;
+            flex-direction: column;
+            height: 320px;
+        }
+
+        .chart-card h3 {
+            font-size: 15px;
+            color: #334155;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .chart-box {
+            position: relative;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* --- HÀNG 3: 3 ĐÈN LED (3, 4, 5) --- */
+        .led-card {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+        }
+
+        .light-bulb {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            transition: all 0.4s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .light-bulb svg {
+            width: 30px;
+            height: 30px;
+            fill: #64748b;
+            transition: all 0.4s ease;
+        }
+
+        /* Trạng thái BẬT của đèn */
+        .led-card.active .light-bulb {
+            background-color: #fde047;
+            box-shadow: 0 0 20px #facc15, inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .led-card.active .light-bulb svg {
+            fill: #ca8a04;
+        }
+
+        .device-name {
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .status-text {
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Menu bên trái -->
+    <div class="sidebar">
+        <div class="logo">IoT SYSTEM</div>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li class="active"><a href="dashboard2.html">Dashboard 2</a></li>
+            <li><a href="data_sensors.html">Data Sensors</a></li>
+            <li><a href="action_history.html">Action History</a></li>
+            <li><a href="profile.html">Profile</a></li>
+            <!-- Thêm nút Đăng xuất -->
+            <li onclick="handleLogout()" style="margin-top: auto; border-top: 1px solid #e2e8f0; color: #ef4444;">
+                <a href="#" style="color: #ef4444;">Đăng xuất</a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Nội dung chính -->
+    <div class="main-content">
+        <!-- Header có nút bấm Random ở góc trên bên phải -->
+        <div class="header">
+            <span>Dashboard 2 - Random & Auto LED</span>
+            <button class="btn-random" onclick="triggerRandom()">🎲 Random Giá Trị</button>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- HÀNG 1: 3 Ô giá trị Random -->
+            <div class="card">
+                <h3>Random (0 - 11)</h3>
+                <div class="value" id="rand1-val">0</div>
+            </div>
+            <div class="card">
+                <h3>Random (0 - 101)</h3>
+                <div class="value" id="rand2-val">0</div>
+            </div>
+            <div class="card">
+                <h3>Random (0 - 1001)</h3>
+                <div class="value" id="rand3-val">0</div>
+            </div>
+
+            <!-- HÀNG 2: 3 Biểu đồ đường cho 3 giá trị random -->
+            <div class="chart-card">
+                <h3>Biểu đồ Random 0-11</h3>
+                <div class="chart-box"><canvas id="chart1"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Biểu đồ Random 0-101</h3>
+                <div class="chart-box"><canvas id="chart2"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Biểu đồ Random 0-1001</h3>
+                <div class="chart-box"><canvas id="chart3"></canvas></div>
+            </div>
+
+            <!-- HÀNG 3: 3 Đèn LED (LED 3, LED 4, LED 5) -->
+            <div class="led-card" id="ledBox3">
+                <div class="light-bulb">
+                    <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+                </div>
+                <span class="device-name">Đèn LED 3 (Chân D5)</span>
+                <span class="status-text" id="statusText3">Trạng thái: TẮT</span>
+            </div>
+
+            <div class="led-card" id="ledBox4">
+                <div class="light-bulb">
+                    <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+                </div>
+                <span class="device-name">Đèn LED 4 (Chân D6)</span>
+                <span class="status-text" id="statusText4">Trạng thái: TẮT</span>
+            </div>
+
+            <div class="led-card" id="ledBox5">
+                <div class="light-bulb">
+                    <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+                </div>
+                <span class="device-name">Đèn LED 5 (Chân D7)</span>
+                <span class="status-text" id="statusText5">Trạng thái: TẮT</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Kiểm tra xác thực ngay khi tải trang: Nếu chưa có token, đá về trang login
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        // 2. Hàm xử lý Đăng xuất
+        function handleLogout() {
+            fetch('http://localhost:5000/api/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .finally(() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('username');
+                window.location.href = 'login.html';
+            });
+        }
+        // Hàm tạo cấu hình biểu đồ
+        function createChart(canvasId, labelName, colorHex) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: labelName,
+                        data: [],
+                        borderColor: colorHex,
+                        backgroundColor: colorHex + '15',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { position: 'top' } }
+                }
+            });
+        }
+
+        const chart1 = createChart('chart1', 'Random 0-11', '#3b82f6');
+        const chart2 = createChart('chart2', 'Random 0-101', '#ef4444');
+        const chart3 = createChart('chart3', 'Random 0-1001', '#eab308');
+
+        // Hàm gửi lệnh điều khiển phần cứng thật qua Flask API /api/control (Không ghi log bảng actions cho đèn 3, 4, 5)
+        function sendHardwareCommand(ledId, turnOn) {
+            let command = turnOn ? `LED${ledId} ON` : `LED${ledId} OFF`;
+            
+            // Lấy token đã lưu trong localStorage khi đăng nhập
+            const token = localStorage.getItem('token');
+
+            fetch('http://localhost:5000/api/control', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token // <--- Bổ sung Header Token ở đây
+                },
+                body: JSON.stringify({ command: command })
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    alert('Phiên đăng nhập đã hết hạn hoặc chưa đăng nhập!');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                return response.json();
+            })
+            .catch(err => console.log("Lỗi điều khiển phần cứng LED", ledId, err));
+        }
+
+        // Hàm thực hiện random khi bấm nút ở góc trên bên phải
+        function triggerRandom() {
+            let val1 = Math.floor(Math.random() * 12);
+            let val2 = Math.floor(Math.random() * 102);
+            let val3 = Math.floor(Math.random() * 1002);
+
+            document.getElementById('rand1-val').innerText = val1;
+            document.getElementById('rand2-val').innerText = val2;
+            document.getElementById('rand3-val').innerText = val3;
+
+            let led3On = val1 >= 6;
+            updateLedUI(3, led3On);
+            sendHardwareCommand(3, led3On);
+
+            let led4On = val2 >= 51;
+            updateLedUI(4, led4On);
+            sendHardwareCommand(4, led4On);
+
+            let led5On = val3 >= 501;
+            updateLedUI(5, led5On);
+            sendHardwareCommand(5, led5On);
+
+            const nowStr = new Date().toLocaleTimeString();
+            updateChartData(chart1, nowStr, val1);
+            updateChartData(chart2, nowStr, val2);
+            updateChartData(chart3, nowStr, val3);
+
+            // GỌI API LƯU VÀO CSDL
+            fetch('http://localhost:5000/api/save-random', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token // <--- Bổ sung Header Token ở đây
+                },
+                body: JSON.stringify({ val1: val1, val2: val2, val3: val3 })
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    alert('Phiên đăng nhập đã hết hạn!');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                return response.json();
+            })
+            .then(data => console.log("Server phản hồi:", data))
+            .catch(err => console.error("Lỗi fetch:", err));
+        }
+
+        // Hàm đồng bộ trạng thái đèn từ CSDL khi vừa mở trang Dashboard 2
+        function fetchDeviceStatus() {
+            fetch('http://localhost:5000/api/devices', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                return response.json();
+            })
+            .then(devices => {
+                if (!devices) return;
+                devices.forEach(dev => {
+                    // dev.device_id từ 3 đến 5 ứng với LED 3, LED 4, LED 5
+                    let ledId = dev.device_id;
+                    if (ledId >= 3 && ledId <= 5) {
+                        let isLit = dev.status && (dev.status.toLowerCase() === 'on' || dev.status.toLowerCase() === 'active');
+                        updateLedUI(ledId, isLit);
+                    }
+                });
+            })
+            .catch(err => console.log("Không thể đồng bộ trạng thái thiết bị:", err));
+        }
+
+        function updateLedUI(ledId, isOn) {
+            const box = document.getElementById(`ledBox${ledId}`);
+            const text = document.getElementById(`statusText${ledId}`);
+            if (isOn) {
+                box.classList.add('active');
+                text.innerText = "Trạng thái: BẬT";
+                text.style.color = "#2563eb";
+            } else {
+                box.classList.remove('active');
+                text.innerText = "Trạng thái: TẮT";
+                text.style.color = "#64748b";
+            }
+        }
+
+        function updateChartData(chart, label, value) {
+            if (chart.data.labels.length > 10) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+            chart.data.labels.push(label);
+            chart.data.datasets[0].data.push(value);
+            chart.update();
+        }
+        // Gọi hàm đồng bộ trạng thái thiết bị khi trang vừa load xong
+        window.onload = function() {
+            fetchDeviceStatus();
+        };
+    </script>
+</body>
+</html>

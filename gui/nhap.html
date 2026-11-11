@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Action History - Hệ thống IoT</title>
+    <title>Data Sensors - Hệ thống IoT</title>
     <style>
         * {
             margin: 0;
@@ -12,6 +12,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
+        /* Khóa cứng toàn màn hình, không cho phép cuộn trang tổng */
         body {
             display: flex;
             height: 100vh;
@@ -109,9 +110,10 @@
             gap: 12px;
             flex: 1;
             overflow: hidden;
+            align-items: flex-start; /* Giúp các khối bám gọn theo nội dung bảng */
         }
 
-        /* --- 3. THANH TÌM KIẾM --- */
+        /* --- 3. THANH TÌM KIẾM & DROPDOWN --- */
         .search-bar-container {
             display: flex;
             gap: 12px;
@@ -120,6 +122,7 @@
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(59, 130, 246, 0.06);
             align-items: center;
+            width: 100%;
             flex-shrink: 0;
         }
 
@@ -137,18 +140,19 @@
             border-color: #3b82f6;
         }
 
-        .search-select {
+        .filter-dropdown {
             padding: 8px 12px;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             font-size: 13px;
-            outline: none;
-            background-color: #fff;
+            background-color: #ffffff;
             color: #334155;
+            outline: none;
+            cursor: pointer;
             transition: border-color 0.3s;
         }
 
-        .search-select:focus {
+        .filter-dropdown:focus {
             border-color: #3b82f6;
         }
 
@@ -168,10 +172,10 @@
             background-color: #2563eb;
         }
 
-        /* --- 4. BẢNG THỐNG KÊ LỊCH SỬ THAO TÁC --- */
+        /* --- 4. BẢNG THỐNG KÊ DỮ LIỆU --- */
         .table-container {
             background-color: #ffffff;
-            border-radius: 10px;
+            border-radius: 10px; /* Bo tròn phía trên */
             box-shadow: 0 2px 4px rgba(59, 130, 246, 0.06);
             overflow: hidden;
             flex: 1;
@@ -209,31 +213,7 @@
             background-color: #eff6ff;
         }
 
-        .badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .badge-on {
-            background-color: #dcfce7;
-            color: #15803d;
-        }
-
-        .badge-off {
-            background-color: #fee2e2;
-            color: #b91c1c;
-        }
-
-        .badge-loading {
-            background-color: #fef9c3;
-            color: #a16207;
-        }
-
-        /* --- 5. THANH PHÂN TRANG --- */
+        /* --- 5. THANH PHÂN TRANG (PAGINATION) NẰM SÁT NGAY DƯỚI BẢNG --- */
         .pagination-container {
             display: flex;
             justify-content: space-between;
@@ -242,6 +222,7 @@
             background-color: #ffffff;
             border-radius: 0 0 10px 10px;
             box-shadow: 0 4px 6px rgba(59, 130, 246, 0.06);
+            width: 100%;
             flex-shrink: 0;
             font-size: 13px;
             color: #64748b;
@@ -260,63 +241,61 @@
     </style>
 </head>
 <body>
+
+    <!-- 1. Menu bên trái -->
     <div class="sidebar">
         <div class="logo">IoT SYSTEM</div>
         <ul>
             <li><a href="dashboard.html">Dashboard</a></li>
-            <li><a href="data_sensors.html">Data Sensors</a></li>
-            <li class="active"><a href="action_history.html">Action History</a></li>
+            <li><a href="dashboard2.html">Dashboard 2</a></li>
+            <li class="active"><a href="data_sensors.html">Data Sensors</a></li>
+            <li><a href="action_history.html">Action History</a></li>
             <li><a href="profile.html">Profile</a></li>
         </ul>
     </div>
 
+    <!-- 2. Phần nội dung chính -->
     <div class="main-content">
-        <div class="header">Action History</div>
+        <div class="header">Data Sensors Statistics</div>
 
         <div class="content-container">
-            <!-- Thanh tìm kiếm đã cập nhật đúng 2 Đèn LED -->
+            <!-- 3. Thanh tìm kiếm & Dropdown 4 giá trị bộ lọc -->
             <div class="search-bar-container">
-                <input type="text" class="search-input" placeholder="Nhập thời gian cần tìm kiếm...">
+                <input type="text" id="searchInput" class="search-input" placeholder="Nhập giá trị tìm kiếm (VD: 0-100, 2026-06)...">
                 
-                <select class="search-select device-select">
-                    <option value="">Tất cả thiết bị</option>
-                    <option value="đèn led 1">Đèn LED 1</option>
-                    <option value="đèn led 2">Đèn LED 2</option>
-                </select>
-
-                <select class="search-select action-select">
-                    <option value="">Tất cả hành động</option>
-                    <option value="on">On</option>
-                    <option value="off">Off</option>
-                </select>
-
-                <select class="search-select status-select">
-                    <option value="">Tất cả trạng thái</option>
-                    <option value="on">On</option>
-                    <option value="off">Off</option>
-                    <option value="loading">Loading</option>
+                <select id="filterDropdown" class="filter-dropdown">
+                    <option value="all">Tất cả</option>
+                    <option value="nhiet_do">Nhiệt độ</option>
+                    <option value="do_am">Độ ẩm</option>
+                    <option value="anh_sang">Ánh sáng</option>
+                    <option value="rand_11">Random (0 - 11)</option>
+                    <option value="rand_101">Random (0 - 101)</option>
+                    <option value="rand_1001">Random (0 - 1001)</option>
+                    <option value="thoi_gian">Thời gian</option>
                 </select>
 
                 <button class="search-btn">Tìm kiếm</button>
             </div>
 
+            <!-- 4. Bảng dữ liệu -->
+            <!-- 4. Bảng dữ liệu (sẽ được JavaScript tự động điền từ database) -->
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 8%;">ID</th>
-                            <th style="width: 24%;">Tên thiết bị</th>
-                            <th style="width: 12%;">Hành động</th>
-                            <th style="width: 13%;">Trạng thái</th>
-                            <th style="width: 21%;">Thời gian gửi yêu cầu</th>
-                            <th style="width: 22%;">Thời gian phản hồi</th>
+                            <th style="width: 10%;">ID</th>
+                            <th style="width: 20%;">Tên thiết bị</th>
+                            <th style="width: 25%;">Cảm Biến</th>
+                            <th style="width: 20%;">Giá Trị</th>
+                            <th style="width: 25%;">Thời Gian</th>
                         </tr>
                     </thead>
-                    <tbody id="actionTableBody">
+                    <tbody id="sensorTableBody">
+                        <!-- Dữ liệu từ API sẽ được chèn vào đây tự động -->
                     </tbody>
                 </table>
             </div>
-
+            <!-- Thanh phân trang nằm sát ngay dưới bảng -->
             <div class="pagination-container">
                 <div id="pageInfo">Đang tải thông tin...</div>
                 <div class="pagination" id="paginationNumbers"></div>
@@ -325,122 +304,143 @@
     </div>
 
 <script>
-    const ROWS_PER_PAGE = 12;
+    const ROWS_PER_PAGE = 13; 
     let currentPage = 1;
-    let allActionData = [];
+    let allSensorData = []; // Mảng chứa dữ liệu lấy từ Database
 
-    function fetchActionHistory() {
-        fetch('http://localhost:5000/api/history')
+    // Hàm gọi API lấy dữ liệu từ Backend Flask
+    function fetchSensorData() {
+        fetch('http://localhost:5000/api/sensors-history')
         .then(response => response.json())
         .then(data => {
-            allActionData = data;
-            updateTable();
+            allSensorData = data; // Lưu dữ liệu vào mảng
+            updateTable();       // Cập nhật lại bảng và phân trang
         })
         .catch(err => {
-            console.error("Lỗi khi tải lịch sử thao tác:", err);
+            console.error("Lỗi khi tải dữ liệu cảm biến:", err);
             document.getElementById("pageInfo").textContent = "Không thể kết nối đến Server cơ sở dữ liệu!";
         });
     }
 
     function updateTable() {
-        const timeKeyword = document.querySelector(".search-input").value.trim().toLowerCase();
-        const deviceVal = document.querySelector(".device-select").value.toLowerCase();
-        const actionVal = document.querySelector(".action-select").value.toLowerCase();
-        const statusVal = document.querySelector(".status-select").value.toLowerCase();
-        const tbody = document.getElementById("actionTableBody");
-        tbody.innerHTML = "";
+        const searchValue = document.getElementById("searchInput").value.trim().toLowerCase();
+        const filterValue = document.getElementById("filterDropdown").value;
+        const tbody = document.getElementById("sensorTableBody");
+        tbody.innerHTML = ""; // Xóa dữ liệu cũ trên giao diện
 
-        const matchedRows = allActionData.filter(item => {
+        // Lọc dữ liệu theo từ khóa tìm kiếm và dropdown bộ lọc
+        const matchedData = allSensorData.filter(item => {
+            const sensorText = (item.sensor_name || "").toLowerCase();
+            const valueText = (item.value || "").toLowerCase();
+            const timeText = (item.time || "").toLowerCase();
             const deviceText = (item.device_name || "").toLowerCase();
-            const actionText = (item.action || "").toLowerCase();
-            const statusText = (item.status || "").toLowerCase();
-            const timeText = ((item.time || "") + " " + (item.time_response || "")).toLowerCase();
 
-            const matchesTime = timeKeyword === "" || timeText.includes(timeKeyword);
-            const matchesDevice = deviceVal === "" || deviceText.includes(deviceVal);
-            const matchesAction = actionVal === "" || actionText.includes(actionVal);
-            const matchesStatus = statusVal === "" || statusText.includes(statusVal);
+            if (searchValue === "") return true;
 
-            return matchesTime && matchesDevice && matchesAction && matchesStatus;
+            if (filterValue === "nhiet_do") {
+                return sensorText.includes("nhiệt độ") && valueText.includes(searchValue);
+            } 
+            else if (filterValue === "do_am") {
+                return sensorText.includes("độ ẩm") && valueText.includes(searchValue);
+            } 
+            else if (filterValue === "anh_sang") {
+                return sensorText.includes("ánh sáng") && valueText.includes(searchValue);
+            } 
+            else if (filterValue === "thoi_gian") {
+                return timeText.includes(searchValue);
+            } 
+            else { 
+                return sensorText.includes(searchValue) || valueText.includes(searchValue) || timeText.includes(searchValue) || deviceText.includes(searchValue);
+            }
         });
 
-        const totalRows = matchedRows.length;
+        // Tính toán phân trang
+        const totalRows = matchedData.length;
         const totalPages = Math.ceil(totalRows / ROWS_PER_PAGE) || 1;
+        
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
 
         const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
         const endIndex = startIndex + ROWS_PER_PAGE;
-        const pageItems = matchedRows.slice(startIndex, endIndex);
+        const pageItems = matchedData.slice(startIndex, endIndex);
 
+        // Đổ dữ liệu các dòng thuộc trang hiện tại vào bảng HTML
         pageItems.forEach(item => {
-            // Xử lý chuẩn cột Hành động (Action) bóc từ chuỗi action (VD: "LED1 OFF" -> "OFF")
-            let actionRaw = (item.action || "").toUpperCase();
-            let actionDisplay = actionRaw.includes("OFF") ? "OFF" : "ON";
-            let actionBadgeClass = actionDisplay === "OFF" ? 'badge-off' : 'badge-on';
-            
-            // Xử lý cột Trạng thái (Status)
-            let statusRaw = (item.status || "").toLowerCase();
-            let statusTextVal = statusRaw === 'loading' ? 'LOADING' : (statusRaw === 'off' ? 'OFF' : 'ON');
-            
-            let statusBadgeClass = 'badge-loading';
-            if (statusTextVal === 'ON') statusBadgeClass = 'badge-on';
-            else if (statusTextVal === 'OFF') statusBadgeClass = 'badge-off';
-
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td>${item.id}</td>
-                <td>${item.device_name || 'Đèn LED'}</td>
-                <td><span class="badge ${actionBadgeClass}">${actionDisplay}</span></td>
-                <td><span class="badge ${statusBadgeClass}">${statusTextVal}</span></td>
-                <td>${item.time || ''}</td>
-                <td>${item.time_response || 'Đang chờ...'}</td>
+                <td>${item.device_name}</td>
+                <td>${item.sensor_name}</td>
+                <td>${item.value}</td>
+                <td>${item.time}</td>
             `;
             tbody.appendChild(tr);
         });
 
+        // Cập nhật thông tin phân trang góc trái
         const pageInfo = document.getElementById("pageInfo");
-        pageInfo.textContent = totalRows === 0
-            ? "Không tìm thấy dữ liệu phù hợp"
-            : `Hiển thị dòng ${startIndex + 1} - ${Math.min(endIndex, totalRows)} trên tổng số ${totalRows} dòng`;
-        
+        if (totalRows === 0) {
+            pageInfo.textContent = `Không tìm thấy dữ liệu phù hợp`;
+        } else {
+            pageInfo.textContent = `Hiển thị dòng ${startIndex + 1} - ${Math.min(endIndex, totalRows)} trên tổng số ${totalRows} dòng`;
+        }
+
         renderPaginationControls(totalPages);
     }
 
     function renderPaginationControls(totalPages) {
-        const container = document.getElementById("paginationNumbers");
-        container.innerHTML = "";
+        const paginationContainer = document.getElementById("paginationNumbers");
+        paginationContainer.innerHTML = "";
 
+        // Nút trang trước «
         const prevBtn = document.createElement("button");
         prevBtn.className = "page-btn";
         prevBtn.textContent = "«";
         prevBtn.disabled = currentPage === 1;
-        prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; updateTable(); } };
-        container.appendChild(prevBtn);
+        prevBtn.onclick = () => {
+            if (currentPage > 1) {
+                currentPage--;
+                updateTable();
+            }
+        };
+        paginationContainer.appendChild(prevBtn);
 
+        // Các nút số trang
         for (let i = 1; i <= totalPages; i++) {
             const btn = document.createElement("button");
             btn.className = `page-btn ${i === currentPage ? "active" : ""}`;
             btn.textContent = i;
-            btn.onclick = () => { currentPage = i; updateTable(); };
-            container.appendChild(btn);
+            btn.onclick = () => {
+                currentPage = i;
+                updateTable();
+            };
+            paginationContainer.appendChild(btn);
         }
 
+        // Nút trang sau »
         const nextBtn = document.createElement("button");
         nextBtn.className = "page-btn";
         nextBtn.textContent = "»";
         nextBtn.disabled = currentPage === totalPages;
-        nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; updateTable(); } };
-        container.appendChild(nextBtn);
+        nextBtn.onclick = () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                updateTable();
+            }
+        };
+        paginationContainer.appendChild(nextBtn);
     }
 
+    // Sự kiện bấm nút tìm kiếm
     document.querySelector(".search-btn").addEventListener("click", function () {
         currentPage = 1;
         updateTable();
     });
 
+    // Khi load trang, tự động gọi API lấy dữ liệu từ database
     window.onload = function() {
-        fetchActionHistory();
+        fetchSensorData();
     };
 </script>
 </body>

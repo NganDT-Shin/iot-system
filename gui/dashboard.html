@@ -293,9 +293,14 @@
         <div class="logo">IoT SYSTEM</div>
         <ul>
             <li class="active"><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="dashboard2.html">Dashboard 2</a></li>
             <li><a href="data_sensors.html">Data Sensors</a></li>
             <li><a href="action_history.html">Action History</a></li>
             <li><a href="profile.html">Profile</a></li>
+            <!-- Thêm nút Đăng xuất -->
+            <li onclick="handleLogout()" style="margin-top: auto; border-top: 1px solid #e2e8f0; color: #ef4444;">
+                <a href="#" style="color: #ef4444;">Đăng xuất</a>
+            </li>
         </ul>
     </div>
 
@@ -367,25 +372,54 @@
 
     <!-- Script tương tác -->
     <script>
-        // 1. Xử lý bật tắt đèn cho từng thiết bị (LED 1 hoặc LED 2)
-        function toggleLight(ledId, checkbox) {
-            const deviceBox = document.getElementById(`deviceBox${ledId}`);
-            const statusText = document.getElementById(`statusText${ledId}`);
-            
-            // Tạo lệnh tương ứng khớp với code Arduino của bạn ("LED1 ON", "LED2 OFF"...)
-            let command = checkbox.checked ? `LED${ledId} ON` : `LED${ledId} OFF`;
+        // 1. Kiểm tra xác thực ngay khi tải trang: Nếu chưa có token, đá về trang login
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = 'login.html';
+        }
 
-            // Gửi request POST tới Flask Backend
-            fetch('http://localhost:5000/api/control', {
+        // 2. Hàm xử lý Đăng xuất
+        function handleLogout() {
+            fetch('http://localhost:5000/api/logout', {
                 method: 'POST',
                 headers: {
+                    'Authorization': 'Bearer ' + token,
                     'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ command: command })
+                }
             })
-            .then(response => response.json())
-            .then(data => {
-                console.log("Phản hồi từ Server:", data);
+            .finally(() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('username');
+                window.location.href = 'login.html';
+            });
+        }
+        // 1. Xử lý bật tắt đèn cho từng thiết bị (LED 1 hoặc LED 2)
+        function toggleLight(ledId, checkbox) {
+        const deviceBox = document.getElementById(`deviceBox${ledId}`);
+        const statusText = document.getElementById(`statusText${ledId}`);
+        let command = checkbox.checked ? `LED${ledId} ON` : `LED${ledId} OFF`;
+
+        // Lấy token đã lưu khi đăng nhập
+        const token = localStorage.getItem('token'); 
+
+        fetch('http://localhost:5000/api/control', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token // <--- BẮT BUỘC PHẢI CÓ DÒNG NÀY
+            },
+            body: JSON.stringify({ command: command })
+        })
+        .then(response => {
+            if (response.status === 401) {
+                alert('Phiên đăng nhập hết hạn hoặc chưa đăng nhập!');
+                window.location.href = 'login.html';
+                return;
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.status === 'success') {
                 if (checkbox.checked) {
                     deviceBox.classList.add('active');
                     statusText.innerText = "Trạng thái: BẬT";
@@ -395,13 +429,13 @@
                     statusText.innerText = "Trạng thái: TẮT";
                     statusText.style.color = "#64748b";
                 }
-            })
-            .catch(error => {
-                console.error('Lỗi kết nối tới Backend:', error);
-                alert('Không thể kết nối đến Server điều khiển!');
-                checkbox.checked = !checkbox.checked; // Trượt ngược lại nếu lỗi
-            });
-        }
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi kết nối tới Backend:', error);
+            checkbox.checked = !checkbox.checked; // Trượt ngược lại nếu lỗi
+        });
+    }
 
         // 2. Cấu hình biểu đồ đường với Chart.js
         const ctx = document.getElementById('sensorChart').getContext('2d');
@@ -486,21 +520,35 @@
                 }
             })
             .catch(err => console.log("Đang chờ kết nối tới Server cảm biến..."));
-        }, 3000);
+        }, 5000);
 
         // 4. Hàm đồng bộ trạng thái đèn từ CSDL khi vừa mở trang Dashboard
+        // 4. Hàm đồng bộ trạng thái đèn từ CSDL khi vừa mở trang Dashboard
         function fetchDeviceStatus() {
-            fetch('http://localhost:5000/api/devices')
-            .then(response => response.json())
+            const token = localStorage.getItem('token'); // Lấy token
+
+            fetch('http://localhost:5000/api/devices', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token, // <--- THÊM HEADER TOKEN VÀO ĐÂY
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                return response.json();
+            })
             .then(devices => {
+                if (!devices) return;
                 devices.forEach(dev => {
-                    // Giả định device_id = 1 là Đèn LED 1, device_id = 2 là Đèn LED 2
                     let ledId = dev.device_id;
                     let checkbox = document.getElementById(`lightSwitch${ledId}`);
                     let deviceBox = document.getElementById(`deviceBox${ledId}`);
                     let statusText = document.getElementById(`statusText${ledId}`);
 
-                    // Kiểm tra trạng thái trong DB (nếu là 'on' hoặc 'active')
                     if (dev.status && (dev.status.toLowerCase() === 'on' || dev.status.toLowerCase() === 'active')) {
                         if (checkbox) checkbox.checked = true;
                         if (deviceBox) deviceBox.classList.add('active');
