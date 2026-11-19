@@ -490,7 +490,7 @@
             }
         });
 
-        // 3. Cập nhật dữ liệu cảm biến thời gian thực mỗi 3 giây
+        // 3. Cập nhật dữ liệu cảm biến thời gian thực mỗi 5 giây
         setInterval(() => {
             fetch('http://localhost:5000/api/sensors')
             .then(response => response.json())
@@ -522,7 +522,6 @@
             .catch(err => console.log("Đang chờ kết nối tới Server cảm biến..."));
         }, 5000);
 
-        // 4. Hàm đồng bộ trạng thái đèn từ CSDL khi vừa mở trang Dashboard
         // 4. Hàm đồng bộ trạng thái đèn từ CSDL khi vừa mở trang Dashboard
         function fetchDeviceStatus() {
             const token = localStorage.getItem('token'); // Lấy token

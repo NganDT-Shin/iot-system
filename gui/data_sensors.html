@@ -360,6 +360,7 @@
         });
     }
 
+    //Hàm xử lý lọc và hiển thị dữ liệu trong bảng
     function updateTable() {
         const searchValue = document.getElementById("searchInput").value.trim().toLowerCase();
         const filterValue = document.getElementById("filterDropdown").value;
@@ -438,6 +439,7 @@
         renderPaginationControls(totalPages);
     }
 
+    //Hàm hiển thị các nút phân trang
     function renderPaginationControls(totalPages) {
         const paginationContainer = document.getElementById("paginationNumbers");
         paginationContainer.innerHTML = "";

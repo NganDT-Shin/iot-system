@@ -46,7 +46,7 @@ def get_db_connection():
 
 
 # --- CẤU HÌNH MQTT BROKER ---
-MQTT_BROKER = "10.32.41.46"  # IP Mosquitto Broker của bạn
+MQTT_BROKER = "192.168.247.7"  # IP Mosquitto Broker của bạn
 MQTT_PORT = 1883
 TOPIC_SENSOR = "data_sensors"
 TOPIC_CONTROL = "device_control"
@@ -138,8 +138,9 @@ def on_message(client, userdata, msg):
 
         now = datetime.now()
         # 1. Cập nhật bảng actions
-        sql_action = """UPDATE actions SET status = %s, time_response = %s WHERE status = 'LOADING' ORDER BY action_id DESC LIMIT 1"""
-        cursor.execute(sql_action, (status_val, now))
+        if "LED1" in payload_upper or "LED2" in payload_upper or "ALL" in payload_upper:
+            sql_action = """UPDATE actions SET status = %s, time_response = %s WHERE status = 'LOADING' ORDER BY action_id DESC LIMIT 1"""
+            cursor.execute(sql_action, (status_val, now))
 
         # 2. Cập nhật trạng thái mới nhất cho bảng devices
         sql_device = "UPDATE devices SET status = %s WHERE device_id = %s"

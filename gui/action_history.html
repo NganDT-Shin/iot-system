@@ -382,6 +382,7 @@
         });
     }
 
+    //Hàm xử lý lọc và hiển thị dữ liệu trong bảng
     function updateTable() {
         const timeKeyword = document.querySelector(".search-input").value.trim().toLowerCase();
         const deviceVal = document.querySelector(".device-select").value.toLowerCase();
@@ -456,6 +457,7 @@
         renderPaginationControls(totalPages);
     }
 
+    //Hàm hiển thị các nút phân trang
     function renderPaginationControls(totalPages) {
         const container = document.getElementById("paginationNumbers");
         container.innerHTML = "";
